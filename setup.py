@@ -7,7 +7,7 @@ Provides some helpers functions used by the ScraperWiki Data Services team.
 
 setup(
     name='dshelpers',
-    version='1.0.0',
+    version='1.0.1',
     description="Extract fields from tabular data with complex expressions.",
     long_description=long_desc,
     classifiers=[
@@ -29,6 +29,7 @@ setup(
     install_requires=[
         'requests',
         'requests_cache',
+        'mock',
     ],
     tests_require=[],
     entry_points=\
