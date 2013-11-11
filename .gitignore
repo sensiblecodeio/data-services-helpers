@@ -1,2 +1,3 @@
 *.pyc
 *.sqlite
+dshelpers.egg-info
