@@ -28,7 +28,16 @@ _RATE_LIMIT_ENABLED = True  # Used inside rate_limit_disabled() context manager
 _LAST_TOUCH = {}            # domain name => datetime
 
 __all__ = ["update_status", "install_cache", "download_url",
-           "rate_limit_disabled", 'BatchProcessor']
+           "rate_limit_disabled", 'batch_processor']
+
+
+@contextmanager
+def batch_processor(callback, batch_size=2000):
+    processor = BatchProcessor(callback, batch_size)
+    try:
+        yield processor
+    finally:
+        processor.flush()
 
 
 class BatchProcessor(object):
@@ -40,7 +49,7 @@ class BatchProcessor(object):
     Note: You must call flush() to process the final items: this is not done
     automatically (yet)
     """
-    def __init__(self, callback, batch_size=2000):
+    def __init__(self, callback, batch_size):
         self.queue = []
         self.callback = callback
         self.batch_size = batch_size
