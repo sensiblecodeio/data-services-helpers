@@ -28,7 +28,31 @@ _RATE_LIMIT_ENABLED = True  # Used inside rate_limit_disabled() context manager
 _LAST_TOUCH = {}            # domain name => datetime
 
 __all__ = ["update_status", "install_cache", "download_url",
-           "rate_limit_disabled"]
+           "rate_limit_disabled", 'BatchProcessor']
+
+
+def BatchProcessor(object):
+    """
+    You can push items here and they'll be stored in a queue. When batch_size
+    items have been pushed, the given callback is called with the list of
+    items and the queue is cleared.
+
+    Note: You must call flush() to process the final items: this is not done
+    automatically (yet)
+    """
+    def __init__(self, callback, batch_size=2000):
+        self.queue = []
+        self.callback = callback
+        self.batch_size = batch_size
+
+    def push(self, row):
+        self.queue.append(row)
+        if len(self.queue) >= self.batch_size:
+            self.flush()
+
+    def flush(self):
+        self.callback(self.queue)
+        self.queue = []
 
 
 def update_status(table_name="swdata", date_column="date"):
