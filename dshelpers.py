@@ -31,7 +31,7 @@ __all__ = ["update_status", "install_cache", "download_url",
            "rate_limit_disabled", 'BatchProcessor']
 
 
-def BatchProcessor(object):
+class BatchProcessor(object):
     """
     You can push items here and they'll be stored in a queue. When batch_size
     items have been pushed, the given callback is called with the list of
