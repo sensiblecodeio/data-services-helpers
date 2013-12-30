@@ -123,6 +123,7 @@ def _download_without_backoff(url):
 
     L.info("Download {}".format(url))
     response = requests.get(url, timeout=_TIMEOUT)
+    L.debug('"{}"'.format(response.text))
     response.raise_for_status()
 
     return StringIO(response.content)
