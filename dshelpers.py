@@ -27,6 +27,8 @@ _HIT_PERIOD = 2  # seconds between requests to the same domain
 _RATE_LIMIT_ENABLED = True  # Used inside rate_limit_disabled() context manager
 _LAST_TOUCH = {}            # domain name => datetime
 
+_USER_AGENT = 'ScraperWiki Limited (bot@scraperwiki.com)'
+
 __all__ = ["update_status", "install_cache", "download_url",
            "rate_limit_disabled", 'batch_processor']
 
@@ -122,8 +124,12 @@ def _download_without_backoff(url):
         _rate_limit_touch_url(url, now)
 
     L.info("Download {}".format(url))
-    response = requests.get(url, timeout=_TIMEOUT)
+    response = requests.get(
+        url,
+        timeout=_TIMEOUT,
+        headers={'User-agent': _USER_AGENT})
     L.debug('"{}"'.format(response.text))
+
     response.raise_for_status()
 
     return StringIO(response.content)
@@ -269,10 +275,12 @@ def test_backoff_function_works_after_one_failure(
     assert_equal(
         [call(10), call(20)],
         mock_sleep.call_args_list)
+    expected_call = call('http://fake_url.com', timeout=_TIMEOUT,
+                         headers={'User-agent': _USER_AGENT})
     assert_equal(
-        [call('http://fake_url.com', timeout=_TIMEOUT),
-         call('http://fake_url.com', timeout=_TIMEOUT),
-         call('http://fake_url.com', timeout=_TIMEOUT)],
+        [expected_call,
+         expected_call,
+         expected_call],
         mock_requests_get.call_args_list)
 
 
@@ -291,3 +299,24 @@ def test_backoff_raises_on_five_failures(mock_requests_get, mock_sleep):
     assert_equal(
         [call(10), call(20), call(40), call(80), call(160)],
         mock_sleep.call_args_list)
+
+
+@patch('dshelpers.requests.get')
+def test_download_url_sets_user_agent(mock_requests_get):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+
+    _download_without_backoff('http://invalid')
+
+    expected_user_agent = 'ScraperWiki Limited (bot@scraperwiki.com)'
+    expected_call = call(
+        u'http://invalid',
+        timeout=60,
+        headers={'User-agent': expected_user_agent}
+    )
+
+    assert_equal(
+        [expected_call],
+        mock_requests_get.call_args_list)
