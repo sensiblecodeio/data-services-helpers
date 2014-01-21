@@ -237,7 +237,7 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 def test_backoff_function_works_on_a_good_site(mock_requests_get):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = "Hello"
+    fake_response._content = str("Hello")
     mock_requests_get.return_value = fake_response
     assert_equal("Hello", _download_with_backoff('http://fake_url.com').read())
 
@@ -253,7 +253,7 @@ def test_backoff_function_works_after_one_failure(
 
         good_response = requests.Response()
         good_response.status_code = 200
-        good_response._content = "Hello"
+        good_response._content = str("Hello")
 
         yield bad_response
         yield bad_response
