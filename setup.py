@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
 long_desc = """
-Provides some helpers functions used by the ScraperWiki Data Services team.
+Provides some helper functions used by the ScraperWiki Data Services team.
 """
 # See https://pypi.python.org/pypi?%3Aaction=list_classifiers for classifiers
 
 setup(
     name='dshelpers',
     version='1.0.3',
-    description="Extract fields from tabular data with complex expressions.",
+    description="Scraper helper functions.",
     long_description=long_desc,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
