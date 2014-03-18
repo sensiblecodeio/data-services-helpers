@@ -93,15 +93,15 @@ def install_cache(expire_after=12 * 3600):
         allowable_methods=('GET',))
 
 
-def download_url(url, back_off=True):
+def download_url(url, back_off=True, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     back_off=True provides retry
     """
     if back_off:
-        return _download_with_backoff(url)
+        return _download_with_backoff(url, as_file=True, **kwargs)
     else:
-        return _download_without_backoff(url)
+        return _download_without_backoff(url, as_file=True, **kwargs)
 
 
 @contextmanager
@@ -114,7 +114,7 @@ def rate_limit_disabled():
         _RATE_LIMIT_ENABLED = True
 
 
-def _download_without_backoff(url, *args, **kwargs):
+def _download_without_backoff(url, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     """
@@ -135,7 +135,7 @@ def _download_without_backoff(url, *args, **kwargs):
     else:
         kwargs_copy['headers'] = CaseInsensitiveDict({'user-agent': _USER_AGENT})
 
-    response = requests.get(url, *args, **kwargs_copy)
+    response = requests.get(url, **kwargs_copy)
 
     L.debug('"{}"'.format(response.text))
 
@@ -144,12 +144,12 @@ def _download_without_backoff(url, *args, **kwargs):
     return StringIO(response.content)
 
 
-def _download_with_backoff(url):
+def _download_with_backoff(url, **kwargs):
     next_delay = 10
 
     for n in range(0, _MAX_RETRIES):
         try:
-            return _download_without_backoff(url)
+            return _download_without_backoff(url, **kwargs)
         except requests.exceptions.RequestException as e:
             L.exception(e)
             L.info("Retrying in {} seconds: {}".format(next_delay, url))
