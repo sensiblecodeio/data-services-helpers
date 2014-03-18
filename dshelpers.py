@@ -103,6 +103,12 @@ def download_url(url, back_off=True, **kwargs):
     else:
         return _download_without_backoff(url, as_file=True, **kwargs)
 
+def request_url(url, back_off=True, **kwargs):
+    if back_off:
+        return _download_with_backoff(url, as_file=False, **kwargs)
+    else:
+        return _download_without_backoff(url, as_file=False, **kwargs)
+
 
 @contextmanager
 def rate_limit_disabled():
@@ -114,7 +120,7 @@ def rate_limit_disabled():
         _RATE_LIMIT_ENABLED = True
 
 
-def _download_without_backoff(url, **kwargs):
+def _download_without_backoff(url, as_file=True, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     """
@@ -141,7 +147,10 @@ def _download_without_backoff(url, **kwargs):
 
     response.raise_for_status()
 
-    return StringIO(response.content)
+    if as_file:
+        return StringIO(response.content)
+    else:
+        return response
 
 
 def _download_with_backoff(url, **kwargs):
@@ -247,9 +256,37 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 
     mock_sleep.assert_called_once_with(_HIT_PERIOD - 1.5)
 
-
 @patch('dshelpers.requests.get')
-def test_backoff_function_works_on_a_good_site(mock_requests_get):
+def test_passes_headers_through(mock_requests_get):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    _download_with_backoff('http://fake_url.com', headers={'this':'included'})
+    mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_override_timeout(mock_requests_get, mock_time_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    _download_with_backoff('http://fake_url.com', timeout=10)
+    mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_get_response_object_on_good_site(mock_requests_get, mock_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    assert_equal("Hello", request_url('http://fake_url.com').content)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_backoff_function_works_on_a_good_site(mock_requests_get, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
     fake_response._content = str("Hello")
