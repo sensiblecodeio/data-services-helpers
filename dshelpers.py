@@ -17,7 +17,7 @@ from nose.tools import assert_equal, assert_raises
 from mock import call, patch
 
 import scraperwiki
-
+from requests.structures import CaseInsensitiveDict
 L = logging.getLogger('sw.ds.helpers')
 
 _MAX_RETRIES = 5
@@ -114,20 +114,29 @@ def rate_limit_disabled():
         _RATE_LIMIT_ENABLED = True
 
 
-def _download_without_backoff(url):
+def _download_without_backoff(url, *args, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     """
+    kwargs_copy = dict(kwargs)
     if not _url_in_cache(url):
         now = datetime.datetime.now()
         _rate_limit_for_url(url, now)
         _rate_limit_touch_url(url, now)
 
     L.info("Download {}".format(url))
-    response = requests.get(
-        url,
-        timeout=_TIMEOUT,
-        headers={'User-agent': _USER_AGENT})
+    if 'timeout' not in kwargs_copy:
+        kwargs_copy['timeout'] = _TIMEOUT
+    if 'headers' in kwargs_copy:
+        head_dict = CaseInsensitiveDict(kwargs_copy['headers'])
+        if 'user-agent' not in head_dict:
+            head_dict['user-agent'] = _USER_AGENT
+        kwargs_copy['headers'] = head_dict
+    else:
+        kwargs_copy['headers'] = CaseInsensitiveDict({'user-agent': _USER_AGENT})
+
+    response = requests.get(url, *args, **kwargs_copy)
+
     L.debug('"{}"'.format(response.text))
 
     response.raise_for_status()
@@ -276,7 +285,7 @@ def test_backoff_function_works_after_one_failure(
         [call(10), call(20)],
         mock_sleep.call_args_list)
     expected_call = call('http://fake_url.com', timeout=_TIMEOUT,
-                         headers={'User-agent': _USER_AGENT})
+                         headers=CaseInsensitiveDict({'user-agent': _USER_AGENT}))
     assert_equal(
         [expected_call,
          expected_call,
@@ -314,7 +323,7 @@ def test_download_url_sets_user_agent(mock_requests_get):
     expected_call = call(
         u'http://invalid',
         timeout=60,
-        headers={'User-agent': expected_user_agent}
+        headers=CaseInsensitiveDict({'user-agent': expected_user_agent})
     )
 
     assert_equal(
