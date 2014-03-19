@@ -17,7 +17,7 @@ from nose.tools import assert_equal, assert_raises
 from mock import call, patch
 
 import scraperwiki
-
+from requests.structures import CaseInsensitiveDict
 L = logging.getLogger('sw.ds.helpers')
 
 _MAX_RETRIES = 5
@@ -93,15 +93,21 @@ def install_cache(expire_after=12 * 3600):
         allowable_methods=('GET',))
 
 
-def download_url(url, back_off=True):
+def download_url(url, back_off=True, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     back_off=True provides retry
     """
     if back_off:
-        return _download_with_backoff(url)
+        return _download_with_backoff(url, as_file=True, **kwargs)
     else:
-        return _download_without_backoff(url)
+        return _download_without_backoff(url, as_file=True, **kwargs)
+
+def request_url(url, back_off=True, **kwargs):
+    if back_off:
+        return _download_with_backoff(url, as_file=False, **kwargs)
+    else:
+        return _download_without_backoff(url, as_file=False, **kwargs)
 
 
 @contextmanager
@@ -114,33 +120,45 @@ def rate_limit_disabled():
         _RATE_LIMIT_ENABLED = True
 
 
-def _download_without_backoff(url):
+def _download_without_backoff(url, as_file=True, **kwargs):
     """
     Get the content of a URL and return a file-like object.
     """
+    kwargs_copy = dict(kwargs)
     if not _url_in_cache(url):
         now = datetime.datetime.now()
         _rate_limit_for_url(url, now)
         _rate_limit_touch_url(url, now)
 
     L.info("Download {}".format(url))
-    response = requests.get(
-        url,
-        timeout=_TIMEOUT,
-        headers={'User-agent': _USER_AGENT})
+    if 'timeout' not in kwargs_copy:
+        kwargs_copy['timeout'] = _TIMEOUT
+    if 'headers' in kwargs_copy:
+        head_dict = CaseInsensitiveDict(kwargs_copy['headers'])
+        if 'user-agent' not in head_dict:
+            head_dict['user-agent'] = _USER_AGENT
+        kwargs_copy['headers'] = head_dict
+    else:
+        kwargs_copy['headers'] = CaseInsensitiveDict({'user-agent': _USER_AGENT})
+
+    response = requests.get(url, **kwargs_copy)
+
     L.debug('"{}"'.format(response.text))
 
     response.raise_for_status()
 
-    return StringIO(response.content)
+    if as_file:
+        return StringIO(response.content)
+    else:
+        return response
 
 
-def _download_with_backoff(url):
+def _download_with_backoff(url, **kwargs):
     next_delay = 10
 
     for n in range(0, _MAX_RETRIES):
         try:
-            return _download_without_backoff(url)
+            return _download_without_backoff(url, **kwargs)
         except requests.exceptions.RequestException as e:
             L.exception(e)
             L.info("Retrying in {} seconds: {}".format(next_delay, url))
@@ -238,9 +256,37 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 
     mock_sleep.assert_called_once_with(_HIT_PERIOD - 1.5)
 
-
 @patch('dshelpers.requests.get')
-def test_backoff_function_works_on_a_good_site(mock_requests_get):
+def test_passes_headers_through(mock_requests_get):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    _download_with_backoff('http://fake_url.com', headers={'this':'included'})
+    mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_override_timeout(mock_requests_get, mock_time_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    _download_with_backoff('http://fake_url.com', timeout=10)
+    mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_get_response_object_on_good_site(mock_requests_get, mock_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_requests_get.return_value = fake_response
+    assert_equal("Hello", request_url('http://fake_url.com').content)
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_backoff_function_works_on_a_good_site(mock_requests_get, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
     fake_response._content = str("Hello")
@@ -276,7 +322,7 @@ def test_backoff_function_works_after_one_failure(
         [call(10), call(20)],
         mock_sleep.call_args_list)
     expected_call = call('http://fake_url.com', timeout=_TIMEOUT,
-                         headers={'User-agent': _USER_AGENT})
+                         headers=CaseInsensitiveDict({'user-agent': _USER_AGENT}))
     assert_equal(
         [expected_call,
          expected_call,
@@ -314,7 +360,7 @@ def test_download_url_sets_user_agent(mock_requests_get):
     expected_call = call(
         u'http://invalid',
         timeout=60,
-        headers={'User-agent': expected_user_agent}
+        headers=CaseInsensitiveDict({'user-agent': expected_user_agent})
     )
 
     assert_equal(
