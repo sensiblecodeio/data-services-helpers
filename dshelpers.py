@@ -257,14 +257,26 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
     mock_sleep.assert_called_once_with(_HIT_PERIOD - 1.5)
 
 
+@patch('time.sleep')
 @patch('dshelpers.requests.request')
-def test_passes_headers_through(mock_request):
+def test_passes_headers_through(mock_request, mock_time_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
     fake_response._content = str("Hello")
     mock_request.return_value = fake_response
-    _download_with_backoff('http://fake_url.com', headers={'this':'included'})
+    _download_with_backoff('http://fake_url.com', headers={'this': 'included'})
     mock_request.assert_called_with(u"GET", u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
+
+
+@patch('time.sleep')
+@patch('dshelpers.requests.request')
+def test_passes_method_through(mock_request, mock_time_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    mock_request.return_value = fake_response
+    _download_with_backoff('http://fake_url.com', method='POST')
+    mock_request.assert_called_with(u"POST", u'http://fake_url.com', headers=CaseInsensitiveDict({ u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
 
 
 @patch('time.sleep')
