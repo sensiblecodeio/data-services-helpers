@@ -1,6 +1,6 @@
 from distutils.core import setup
 setup(name='dshelpers',
-      version='1.0.3',
+      version='1.0.4',
       description="Provides some helpers functions used by the ScraperWiki Data Services team.",
       long_description="Provides some helpers functions used by the ScraperWiki Data Services team.",
       classifiers=["Development Status :: 5 - Production/Stable",
