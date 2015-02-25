@@ -7,6 +7,7 @@ import datetime
 import logging
 import requests
 import requests_cache
+import socket
 import time
 import urlparse
 
@@ -159,7 +160,7 @@ def _download_with_backoff(url, **kwargs):
     for n in range(0, _MAX_RETRIES):
         try:
             return _download_without_backoff(url, **kwargs)
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, socket.timeout) as e:
             L.exception(e)
             L.info("Retrying in {} seconds: {}".format(next_delay, url))
             time.sleep(next_delay)
