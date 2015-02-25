@@ -348,6 +348,18 @@ def test_backoff_raises_on_five_failures(mock_requests_get, mock_sleep):
         mock_sleep.call_args_list)
 
 
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_handle_socket_timeout(mock_requests_get, mock_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    
+    mock_requests_get.side_effect = [socket.timeout, fake_response]
+    # socket.timeout used to cause an exception.
+    _download_with_backoff('http://fake_url.com')
+
+
 @patch('dshelpers.requests.get')
 def test_download_url_sets_user_agent(mock_requests_get):
     fake_response = requests.Response()
