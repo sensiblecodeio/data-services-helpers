@@ -7,6 +7,7 @@ import datetime
 import logging
 import requests
 import requests_cache
+import socket
 import time
 import urlparse
 
@@ -159,7 +160,7 @@ def _download_with_backoff(url, **kwargs):
     for n in range(0, _MAX_RETRIES):
         try:
             return _download_without_backoff(url, **kwargs)
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, socket.timeout) as e:
             L.exception(e)
             L.info("Retrying in {} seconds: {}".format(next_delay, url))
             time.sleep(next_delay)
@@ -345,6 +346,18 @@ def test_backoff_raises_on_five_failures(mock_requests_get, mock_sleep):
     assert_equal(
         [call(10), call(20), call(40), call(80), call(160)],
         mock_sleep.call_args_list)
+
+
+@patch('time.sleep')
+@patch('dshelpers.requests.get')
+def test_handle_socket_timeout(mock_requests_get, mock_sleep):
+    fake_response = requests.Response()
+    fake_response.status_code = 200
+    fake_response._content = str("Hello")
+    
+    mock_requests_get.side_effect = [socket.timeout, fake_response]
+    # socket.timeout used to cause an exception.
+    _download_with_backoff('http://fake_url.com')
 
 
 @patch('dshelpers.requests.get')
