@@ -9,10 +9,10 @@ import requests
 import requests_cache
 import socket
 import time
-import urlparse
 
 from contextlib import contextmanager
-from cStringIO import StringIO
+from io import BytesIO
+from six.moves import urllib
 
 from nose.tools import assert_equal, assert_raises
 from mock import call, patch
@@ -149,7 +149,7 @@ def _download_without_backoff(url, as_file=True, **kwargs):
     response.raise_for_status()
 
     if as_file:
-        return StringIO(response.content)
+        return BytesIO(response.content)
     else:
         return response
 
@@ -211,7 +211,7 @@ def _get_domain(url):
     _get_domain('http://foo.bar/baz/')
     u'foo.bar'
     """
-    return urlparse.urlparse(url).netloc
+    return urllib.parse.urlparse(url).netloc
 
 
 def test_rate_limit_touch_url_works():
