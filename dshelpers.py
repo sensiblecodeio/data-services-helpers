@@ -143,8 +143,9 @@ def _download_without_backoff(url, as_file=True, **kwargs):
         kwargs_copy['headers'] = CaseInsensitiveDict({'user-agent': _USER_AGENT})
 
     response = requests.get(url, **kwargs_copy)
-
-    L.debug('"{}"'.format(response.text))
+    
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        L.debug('"{}"'.format(response.text))
 
     response.raise_for_status()
 
