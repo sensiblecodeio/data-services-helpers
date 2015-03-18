@@ -145,6 +145,7 @@ def _download_without_backoff(url, as_file=True, **kwargs):
     response = requests.get(url, **kwargs_copy)
     
     if logging.getLogger().isEnabledFor(logging.DEBUG):
+        # This can be slow on large responses, due to chardet.
         L.debug('"{}"'.format(response.text))
 
     response.raise_for_status()
