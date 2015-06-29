@@ -1,6 +1,9 @@
 data-services-helpers
 =====================
 
+[![Build Status](https://travis-ci.org/scraperwiki/data-services-helpers.svg)](https://travis-ci.org/scraperwiki/data-services-helpers)
+
+
 A module containing classes and functions that ScraperWiki Data Services
 often uses.
 
