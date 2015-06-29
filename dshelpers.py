@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import datetime
 import logging
@@ -9,16 +10,22 @@ import requests
 import requests_cache
 import socket
 import time
-import urlparse
+from six.moves.urllib.parse import urlparse
 
 from contextlib import contextmanager
-from cStringIO import StringIO
+from six.moves import cStringIO
 
 from nose.tools import assert_equal, assert_raises
-from mock import call, patch
+
+try:
+    from unittest.mock import call, patch
+except ImportError:
+    from mock import call, patch
 
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
+from six.moves import range
+
 L = logging.getLogger('sw.ds.helpers')
 
 _MAX_RETRIES = 5
@@ -151,7 +158,7 @@ def _download_without_backoff(url, as_file=True, **kwargs):
     response.raise_for_status()
 
     if as_file:
-        return StringIO(response.content)
+        return cStringIO(response.content)
     else:
         return response
 
@@ -213,7 +220,7 @@ def _get_domain(url):
     _get_domain('http://foo.bar/baz/')
     u'foo.bar'
     """
-    return urlparse.urlparse(url).netloc
+    return urlparse(url).netloc
 
 
 def test_rate_limit_touch_url_works():
