@@ -13,7 +13,7 @@ import time
 from six.moves.urllib.parse import urlparse
 
 from contextlib import contextmanager
-from six.moves import cStringIO
+from io import BytesIO
 
 from nose.tools import assert_equal, assert_raises
 
@@ -158,7 +158,7 @@ def _download_without_backoff(url, as_file=True, **kwargs):
     response.raise_for_status()
 
     if as_file:
-        return cStringIO(response.content)
+        return BytesIO(response.content)
     else:
         return response
 
