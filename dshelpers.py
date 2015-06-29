@@ -266,8 +266,9 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 
     mock_sleep.assert_called_once_with(_HIT_PERIOD - 1.5)
 
+@patch('time.sleep')
 @patch('dshelpers.requests.get')
-def test_passes_headers_through(mock_requests_get):
+def test_passes_headers_through(mock_requests_get, mock_time_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
     fake_response._content = b"Hello"
