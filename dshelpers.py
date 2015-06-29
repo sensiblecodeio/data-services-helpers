@@ -186,7 +186,7 @@ def _url_in_cache(url):
     try:
         return requests_cache.get_cache().has_url(url)
     except AttributeError as e:  # requests_cache not enabled
-        if e.message == "'Session' object has no attribute 'cache'":
+        if str(e) == "'Session' object has no attribute 'cache'":
             return False
         raise
 
