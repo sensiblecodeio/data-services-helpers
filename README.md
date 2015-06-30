@@ -60,4 +60,4 @@ As `download_url`, but returns the `response` object.
 
 ## Tests
 
-Run with `nosetests`.
+Run with `nosetests dshelpers.py`.
