@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import datetime
 import logging
@@ -9,16 +10,22 @@ import requests
 import requests_cache
 import socket
 import time
-import urlparse
+from six.moves.urllib.parse import urlparse
 
 from contextlib import contextmanager
-from cStringIO import StringIO
+from io import BytesIO
 
 from nose.tools import assert_equal, assert_raises
-from mock import call, patch
+
+try:
+    from unittest.mock import call, patch
+except ImportError:
+    from mock import call, patch
 
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
+from six.moves import range
+
 L = logging.getLogger('sw.ds.helpers')
 
 _MAX_RETRIES = 5
@@ -151,7 +158,7 @@ def _download_without_backoff(url, as_file=True, **kwargs):
     response.raise_for_status()
 
     if as_file:
-        return StringIO(response.content)
+        return BytesIO(response.content)
     else:
         return response
 
@@ -179,7 +186,7 @@ def _url_in_cache(url):
     try:
         return requests_cache.get_cache().has_url(url)
     except AttributeError as e:  # requests_cache not enabled
-        if e.message == "'Session' object has no attribute 'cache'":
+        if str(e) == "'Session' object has no attribute 'cache'":
             return False
         raise
 
@@ -213,7 +220,7 @@ def _get_domain(url):
     _get_domain('http://foo.bar/baz/')
     u'foo.bar'
     """
-    return urlparse.urlparse(url).netloc
+    return urlparse(url).netloc
 
 
 def test_rate_limit_touch_url_works():
@@ -259,11 +266,12 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 
     mock_sleep.assert_called_once_with(_HIT_PERIOD - 1.5)
 
+@patch('time.sleep')
 @patch('dshelpers.requests.get')
-def test_passes_headers_through(mock_requests_get):
+def test_passes_headers_through(mock_requests_get, mock_time_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     mock_requests_get.return_value = fake_response
     _download_with_backoff('http://fake_url.com', headers={'this':'included'})
     mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
@@ -273,7 +281,7 @@ def test_passes_headers_through(mock_requests_get):
 def test_override_timeout(mock_requests_get, mock_time_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     mock_requests_get.return_value = fake_response
     _download_with_backoff('http://fake_url.com', timeout=10)
     mock_requests_get.assert_called_with(u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
@@ -283,18 +291,18 @@ def test_override_timeout(mock_requests_get, mock_time_sleep):
 def test_get_response_object_on_good_site(mock_requests_get, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     mock_requests_get.return_value = fake_response
-    assert_equal("Hello", request_url('http://fake_url.com').content)
+    assert_equal(b"Hello", request_url('http://fake_url.com').content)
 
 @patch('time.sleep')
 @patch('dshelpers.requests.get')
 def test_backoff_function_works_on_a_good_site(mock_requests_get, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     mock_requests_get.return_value = fake_response
-    assert_equal("Hello", _download_with_backoff('http://fake_url.com').read())
+    assert_equal(b"Hello", _download_with_backoff('http://fake_url.com').read())
 
 
 @patch('time.sleep')
@@ -308,7 +316,7 @@ def test_backoff_function_works_after_one_failure(
 
         good_response = requests.Response()
         good_response.status_code = 200
-        good_response._content = str("Hello")
+        good_response._content = b"Hello"
 
         yield bad_response
         yield bad_response
@@ -318,7 +326,7 @@ def test_backoff_function_works_after_one_failure(
 
     with rate_limit_disabled():
         assert_equal(
-            "Hello",
+            b"Hello",
             _download_with_backoff('http://fake_url.com').read())
 
     assert_equal(
@@ -355,7 +363,7 @@ def test_backoff_raises_on_five_failures(mock_requests_get, mock_sleep):
 def test_handle_socket_timeout(mock_requests_get, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     
     mock_requests_get.side_effect = [socket.timeout, fake_response]
     # socket.timeout used to cause an exception.
@@ -366,7 +374,7 @@ def test_handle_socket_timeout(mock_requests_get, mock_sleep):
 def test_download_url_sets_user_agent(mock_requests_get):
     fake_response = requests.Response()
     fake_response.status_code = 200
-    fake_response._content = str("Hello")
+    fake_response._content = b"Hello"
     mock_requests_get.return_value = fake_response
 
     _download_without_backoff('http://invalid')
