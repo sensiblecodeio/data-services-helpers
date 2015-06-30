@@ -7,6 +7,14 @@ data-services-helpers
 A module containing classes and functions that ScraperWiki Data Services
 often uses.
 
+## Installation
+
+For the current release:
+
+```
+pip install dshelpers
+```
+
 ## Usage
 
 ### batch_processor
