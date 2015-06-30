@@ -12,7 +12,7 @@ setup(name='dshelpers',
                    ],
       author="ScraperWiki Limited",
       author_email='dataservices@scraperwiki.com',
-      url='http://scraperwiki.com',
+      url='https://github.com/scraperwiki/data-services-helpers',
       license='BSD',
 
       py_modules=['dshelpers'],
