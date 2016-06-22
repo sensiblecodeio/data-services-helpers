@@ -38,8 +38,8 @@ _LAST_TOUCH = {}            # domain name => datetime
 
 _USER_AGENT = 'ScraperWiki Limited (bot@scraperwiki.com)'
 
-__all__ = ["update_status", "install_cache", "download_url",
-           "rate_limit_disabled", 'batch_processor']
+__all__ = ['update_status', 'install_cache', 'download_url',
+           'request_url', 'rate_limit_disabled', 'batch_processor']
 
 
 @contextmanager
