@@ -11,6 +11,7 @@ import requests
 import requests_cache
 import socket
 import time
+from collections import OrderedDict
 from six.moves.urllib.parse import urlparse
 
 from contextlib import contextmanager
@@ -137,6 +138,14 @@ def _download_without_backoff(url, as_file=True, method='GET', **kwargs):
     """
     Get the content of a URL and return a file-like object.
     """
+    # Make requests consistently hashable for caching.
+    # 'headers' is handled by requests itself.
+    # 'cookies' and 'proxies' contributes to headers.
+    # 'files' and 'json' contribute to data.
+    for k in ['data', 'params']:
+        if k in kwargs:
+            kwargs[k] = OrderedDict(sorted(kwargs[k].items()))
+
     kwargs_copy = dict(kwargs)
     if not _is_url_in_cache(method, url, **kwargs):
         now = datetime.datetime.now()
