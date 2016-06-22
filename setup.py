@@ -1,8 +1,8 @@
 from distutils.core import setup
 setup(name='dshelpers',
       version='1.3.0',
-      description="Provides some helpers functions used by the ScraperWiki Data Services team.",
-      long_description="Provides some helpers functions used by the ScraperWiki Data Services team.",
+      description="Provides some helper functions used by the ScraperWiki Data Services team.",
+      long_description="Provides some helper functions used by the ScraperWiki Data Services team.",
       classifiers=["Development Status :: 5 - Production/Stable",
                    "Intended Audience :: Developers",
                    "License :: OSI Approved :: BSD License",
