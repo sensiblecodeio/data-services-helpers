@@ -21,4 +21,4 @@ setup(name='dshelpers',
                         'mock',
                         'nose',
                         'scraperwiki'],
-     )
+      )

@@ -115,6 +115,7 @@ def download_url(url, back_off=True, **kwargs):
     else:
         return _download_without_backoff(url, as_file=True, **kwargs)
 
+
 def request_url(url, back_off=True, **kwargs):
     if back_off:
         return _download_with_backoff(url, as_file=False, **kwargs)
@@ -154,7 +155,7 @@ def _download_without_backoff(url, as_file=True, method='GET', **kwargs):
         kwargs_copy['headers'] = CaseInsensitiveDict({'user-agent': _USER_AGENT})
 
     response = requests.request(method, url, **kwargs_copy)
-    
+
     if logging.getLogger().isEnabledFor(logging.DEBUG):
         # This can be slow on large responses, due to chardet.
         L.debug('"{}"'.format(response.text))
@@ -309,7 +310,7 @@ def test_passes_headers_through(mock_request, mock_time_sleep):
     fake_response.status_code = 200
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
-    _download_with_backoff('http://fake_url.com', headers={'this':'included'})
+    _download_with_backoff('http://fake_url.com', headers={'this': 'included'})
     mock_request.assert_called_with(u'GET', u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
 
 
@@ -323,6 +324,7 @@ def test_passes_method_through(mock_request, mock_time_sleep):
     _download_with_backoff('http://fake_url.com', method='POST')
     mock_request.assert_called_with(u'POST', u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
 
+
 @patch('time.sleep')
 @patch('dshelpers.requests.request')
 def test_override_timeout(mock_request, mock_time_sleep):
@@ -333,6 +335,7 @@ def test_override_timeout(mock_request, mock_time_sleep):
     _download_with_backoff('http://fake_url.com', timeout=10)
     mock_request.assert_called_with(u'GET', u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
 
+
 @patch('time.sleep')
 @patch('dshelpers.requests.request')
 def test_get_response_object_on_good_site(mock_request, mock_sleep):
@@ -341,6 +344,7 @@ def test_get_response_object_on_good_site(mock_request, mock_sleep):
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
     assert_equal(b"Hello", request_url('http://fake_url.com').content)
+
 
 @patch('time.sleep')
 @patch('dshelpers.requests.request')
@@ -411,7 +415,7 @@ def test_handle_socket_timeout(mock_request, mock_sleep):
     fake_response = requests.Response()
     fake_response.status_code = 200
     fake_response._content = b"Hello"
-    
+
     mock_request.side_effect = [socket.timeout, fake_response]
     # socket.timeout used to cause an exception.
     _download_with_backoff('http://fake_url.com')
