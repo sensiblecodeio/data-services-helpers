@@ -34,7 +34,8 @@ data to a database.
 
 `update_status(table_name="swdata", date_column="date")`
 
-For updating ScraperWiki dataset status endpoints.
+For updating [QuickCode](https://quickcode.io) (previously ScraperWiki) dataset
+status endpoints.
 
 `table_name` is the SQLite database table name; `date_column` is the column of
 that table containing the date the data was recorded.
