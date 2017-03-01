@@ -143,7 +143,7 @@ def _download_without_backoff(url, as_file=True, method='GET', **kwargs):
     # 'cookies' and 'proxies' contributes to headers.
     # 'files' and 'json' contribute to data.
     for k in ['data', 'params']:
-        if k in kwargs:
+        if k in kwargs and isinstance(kwargs[k], dict):
             kwargs[k] = OrderedDict(sorted(kwargs[k].items()))
 
     kwargs_copy = dict(kwargs)
