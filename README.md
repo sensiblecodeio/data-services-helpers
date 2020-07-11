@@ -30,16 +30,6 @@ items.
 Often used to bundle multiple calls to `scraperwiki.sqlite.save` when saving
 data to a database.
 
-### update_status
-
-`update_status(table_name="swdata", date_column="date")`
-
-For updating [QuickCode](https://quickcode.io) (previously ScraperWiki) dataset
-status endpoints.
-
-`table_name` is the SQLite database table name; `date_column` is the column of
-that table containing the date the data was recorded.
-
 ### install_cache
 
 `install_cache(expire_after=12 * 3600, cache_post=False)`

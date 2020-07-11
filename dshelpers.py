@@ -39,7 +39,7 @@ _LAST_TOUCH = {}            # domain name => datetime
 
 _USER_AGENT = 'ScraperWiki Limited (bot@scraperwiki.com)'
 
-__all__ = ['update_status', 'install_cache', 'download_url',
+__all__ = ['install_cache', 'download_url',
            'request_url', 'rate_limit_disabled', 'batch_processor']
 
 
@@ -74,18 +74,6 @@ class BatchProcessor(object):
     def flush(self):
         self.callback(self.queue)
         self.queue = []
-
-
-def update_status(table_name="swdata", date_column="date"):
-    """
-    Set the status endpoint on ScraperWiki to the latest entry e.g.
-    'Latest entry: 2013-10-01'
-    """
-    status_text = 'Latest entry: {}'.format(
-        _get_most_recent_record(table_name, date_column))
-    L.info(status_text)
-
-    scraperwiki.status('ok', status_text)
 
 
 def _get_most_recent_record(table_name, column):
