@@ -1,9 +1,6 @@
 data-services-helpers
 =====================
 
-[![Build Status](https://travis-ci.org/scraperwiki/data-services-helpers.svg)](https://travis-ci.org/scraperwiki/data-services-helpers)
-
-
 A module containing classes and functions that [The Sensible Code Company's](http://sensiblecode.io) Data Services
 often uses.
 
