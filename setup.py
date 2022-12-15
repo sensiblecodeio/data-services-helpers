@@ -19,7 +19,6 @@ setup(name='dshelpers',
       py_modules=['dshelpers'],
       install_requires=['requests',
                         'requests_cache',
-                        'mock',
                         'nose',
                         'scraperwiki'],
       )
