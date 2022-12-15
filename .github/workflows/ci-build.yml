@@ -23,7 +23,10 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install packages
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Check code
+        run: make check
 
       - name: Run tests
         run: pytest dshelpers.py
