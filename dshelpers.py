@@ -16,10 +16,7 @@ from io import BytesIO
 
 from nose.tools import assert_equal, assert_raises
 
-try:
-    from unittest.mock import call, patch
-except ImportError:
-    from unittest.mock import call, patch
+from unittest.mock import call, patch
 
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
