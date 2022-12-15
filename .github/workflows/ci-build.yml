@@ -25,5 +25,8 @@ jobs:
       - name: Install packages
         run: pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Check code
+        run: make check
+
       - name: Run tests
         run: pytest dshelpers.py
