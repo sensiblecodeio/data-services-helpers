@@ -13,7 +13,7 @@ setup(name='dshelpers',
                    ],
       author="The Sensible Code Company Limited",
       author_email='dataservices@sensiblecode.io',
-      url='https://github.com/scraperwiki/data-services-helpers',
+      url='https://github.com/sensiblecodeio/data-services-helpers',
       license='BSD',
 
       py_modules=['dshelpers'],
