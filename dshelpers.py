@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 import datetime
 import inspect
@@ -12,21 +9,17 @@ import requests_cache
 import socket
 import time
 from collections import OrderedDict
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from contextlib import contextmanager
 from io import BytesIO
 
 from nose.tools import assert_equal, assert_raises
 
-try:
-    from unittest.mock import call, patch
-except ImportError:
-    from mock import call, patch
+from unittest.mock import call, patch
 
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
-from six.moves import range
 
 L = logging.getLogger('sw.ds.helpers')
 
@@ -52,7 +45,7 @@ def batch_processor(callback, batch_size=2000):
         processor.flush()
 
 
-class BatchProcessor(object):
+class BatchProcessor:
     """
     You can push items here and they'll be stored in a queue. When batch_size
     items have been pushed, the given callback is called with the list of
@@ -78,7 +71,7 @@ class BatchProcessor(object):
 
 def _get_most_recent_record(table_name, column):
     result = scraperwiki.sql.select(
-        "MAX({1}) AS most_recent FROM {0} LIMIT 1".format(table_name, column))
+        f"MAX({column}) AS most_recent FROM {table_name} LIMIT 1")
     return result[0]['most_recent']
 
 
@@ -140,7 +133,7 @@ def _download_without_backoff(url, as_file=True, method='GET', **kwargs):
         _rate_limit_for_url(url, now)
         _rate_limit_touch_url(url, now)
 
-    L.info("Download {}".format(url))
+    L.info(f"Download {url}")
     if 'timeout' not in kwargs_copy:
         kwargs_copy['timeout'] = _TIMEOUT
     if 'headers' in kwargs_copy:
@@ -155,7 +148,7 @@ def _download_without_backoff(url, as_file=True, method='GET', **kwargs):
 
     if logging.getLogger().isEnabledFor(logging.DEBUG):
         # This can be slow on large responses, due to chardet.
-        L.debug('"{}"'.format(response.text))
+        L.debug(f'"{response.text}"')
 
     response.raise_for_status()
 
@@ -173,11 +166,11 @@ def _download_with_backoff(url, **kwargs):
             return _download_without_backoff(url, **kwargs)
         except (requests.exceptions.RequestException, socket.timeout) as e:
             L.exception(e)
-            L.info("Retrying in {} seconds: {}".format(next_delay, url))
+            L.info(f"Retrying in {next_delay} seconds: {url}")
             time.sleep(next_delay)
             next_delay *= 2
 
-    raise RuntimeError('Max retries exceeded for {0}'.format(url))
+    raise RuntimeError(f'Max retries exceeded for {url}')
 
 
 def _is_url_in_cache(*args, **kwargs):
@@ -229,7 +222,7 @@ def _rate_limit_for_url(url, now=datetime.datetime.now()):
         delta = now - last_touch
         if delta < datetime.timedelta(seconds=_HIT_PERIOD):
             wait = _HIT_PERIOD - delta.total_seconds()
-            L.debug("Rate limiter: sleeping {}s".format(wait))
+            L.debug(f"Rate limiter: sleeping {wait}s")
             time.sleep(wait)
 
 
@@ -237,7 +230,7 @@ def _rate_limit_touch_url(url, now=None):
     if now is None:
         now = datetime.datetime.now()
     domain = _get_domain(url)
-    L.debug("Recording hit for domain {} at {}".format(domain, now))
+    L.debug(f"Recording hit for domain {domain} at {now}")
     _LAST_TOUCH[domain] = now
 
 
@@ -297,7 +290,7 @@ def test_rate_limit_sleeps_up_to_correct_period(mock_sleep):
 def test_set_cache_methods(mock_install_cache):
     install_cache(cache_post=True)
     mock_install_cache.assert_called_with(expire_after=43200,
-                                          allowable_methods=[u'GET', u'POST'])
+                                          allowable_methods=['GET', 'POST'])
 
 
 @patch('time.sleep')
@@ -308,7 +301,7 @@ def test_passes_headers_through(mock_request, mock_time_sleep):
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
     _download_with_backoff('http://fake_url.com', headers={'this': 'included'})
-    mock_request.assert_called_with(u'GET', u'http://fake_url.com', headers=CaseInsensitiveDict({u'this': u'included', u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
+    mock_request.assert_called_with('GET', 'http://fake_url.com', headers=CaseInsensitiveDict({'this': 'included', 'user-agent': 'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
 
 
 @patch('time.sleep')
@@ -319,7 +312,7 @@ def test_passes_method_through(mock_request, mock_time_sleep):
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
     _download_with_backoff('http://fake_url.com', method='POST')
-    mock_request.assert_called_with(u'POST', u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
+    mock_request.assert_called_with('POST', 'http://fake_url.com', headers=CaseInsensitiveDict({'user-agent': 'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=60)
 
 
 @patch('time.sleep')
@@ -330,7 +323,7 @@ def test_override_timeout(mock_request, mock_time_sleep):
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
     _download_with_backoff('http://fake_url.com', timeout=10)
-    mock_request.assert_called_with(u'GET', u'http://fake_url.com', headers=CaseInsensitiveDict({u'user-agent': u'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
+    mock_request.assert_called_with('GET', 'http://fake_url.com', headers=CaseInsensitiveDict({'user-agent': 'ScraperWiki Limited (bot@scraperwiki.com)'}), timeout=10)
 
 
 @patch('time.sleep')
@@ -380,7 +373,7 @@ def test_backoff_function_works_after_one_failure(
     assert_equal(
         [call(10), call(20)],
         mock_sleep.call_args_list)
-    expected_call = call(u'GET', 'http://fake_url.com', timeout=_TIMEOUT,
+    expected_call = call('GET', 'http://fake_url.com', timeout=_TIMEOUT,
                          headers=CaseInsensitiveDict({'user-agent': _USER_AGENT}))
     assert_equal(
         [expected_call,
@@ -429,8 +422,8 @@ def test_download_url_sets_user_agent(mock_request):
 
     expected_user_agent = 'ScraperWiki Limited (bot@scraperwiki.com)'
     expected_call = call(
-        u'GET',
-        u'http://invalid',
+        'GET',
+        'http://invalid',
         timeout=60,
         headers=CaseInsensitiveDict({'user-agent': expected_user_agent})
     )
