@@ -14,10 +14,9 @@ from urllib.parse import urlparse
 from contextlib import contextmanager
 from io import BytesIO
 
-from nose.tools import assert_equal, assert_raises
-
 from unittest.mock import call, patch
 
+import pytest
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
 
@@ -247,9 +246,9 @@ def test_rate_limit_touch_url_works():
     time = datetime.datetime(2010, 11, 1, 10, 15, 30)
 
     with patch.dict(_LAST_TOUCH, {}, clear=True):
-        assert_equal({}, _LAST_TOUCH)
+        assert {} == _LAST_TOUCH
         _rate_limit_touch_url('http://foo.com/bar', now=time)
-        assert_equal({'foo.com': time}, _LAST_TOUCH)
+        assert {'foo.com': time} == _LAST_TOUCH
 
 
 @patch('time.sleep')
@@ -333,7 +332,7 @@ def test_get_response_object_on_good_site(mock_request, mock_sleep):
     fake_response.status_code = 200
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
-    assert_equal(b"Hello", request_url('http://fake_url.com').content)
+    assert b"Hello" == request_url('http://fake_url.com').content
 
 
 @patch('time.sleep')
@@ -343,7 +342,7 @@ def test_backoff_function_works_on_a_good_site(mock_request, mock_sleep):
     fake_response.status_code = 200
     fake_response._content = b"Hello"
     mock_request.return_value = fake_response
-    assert_equal(b"Hello", _download_with_backoff('http://fake_url.com').read())
+    assert b"Hello" == _download_with_backoff('http://fake_url.com').read()
 
 
 @patch('time.sleep')
@@ -366,20 +365,12 @@ def test_backoff_function_works_after_one_failure(
     mock_request.side_effect = response_generator()
 
     with rate_limit_disabled():
-        assert_equal(
-            b"Hello",
-            _download_with_backoff('http://fake_url.com').read())
+        assert b"Hello" == _download_with_backoff('http://fake_url.com').read()
 
-    assert_equal(
-        [call(10), call(20)],
-        mock_sleep.call_args_list)
+    assert [call(10), call(20)] == mock_sleep.call_args_list
     expected_call = call('GET', 'http://fake_url.com', timeout=_TIMEOUT,
                          headers=CaseInsensitiveDict({'user-agent': _USER_AGENT}))
-    assert_equal(
-        [expected_call,
-         expected_call,
-         expected_call],
-        mock_request.call_args_list)
+    assert [expected_call, expected_call, expected_call] == mock_request.call_args_list
 
 
 @patch('time.sleep')
@@ -391,12 +382,10 @@ def test_backoff_raises_on_five_failures(mock_request, mock_sleep):
     mock_request.return_value = fake_response
 
     with rate_limit_disabled():
-        assert_raises(RuntimeError, lambda:
-                      _download_with_backoff('http://fake_url.com'))
+        with pytest.raises(RuntimeError):
+            _download_with_backoff('http://fake_url.com')
 
-    assert_equal(
-        [call(10), call(20), call(40), call(80), call(160)],
-        mock_sleep.call_args_list)
+    assert [call(10), call(20), call(40), call(80), call(160)] == mock_sleep.call_args_list
 
 
 @patch('time.sleep')
@@ -428,6 +417,4 @@ def test_download_url_sets_user_agent(mock_request):
         headers=CaseInsensitiveDict({'user-agent': expected_user_agent})
     )
 
-    assert_equal(
-        [expected_call],
-        mock_request.call_args_list)
+    assert [expected_call] == mock_request.call_args_list
