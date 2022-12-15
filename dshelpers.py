@@ -4,19 +4,17 @@
 import datetime
 import inspect
 import logging
-import requests
-import requests_cache
 import socket
 import time
 from collections import OrderedDict
-from urllib.parse import urlparse
-
 from contextlib import contextmanager
 from io import BytesIO
-
 from unittest.mock import call, patch
+from urllib.parse import urlparse
 
 import pytest
+import requests
+import requests_cache
 import scraperwiki
 from requests.structures import CaseInsensitiveDict
 
