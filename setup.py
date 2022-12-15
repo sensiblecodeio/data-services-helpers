@@ -26,4 +26,5 @@ setup(
     license="BSD",
     py_modules=["dshelpers"],
     install_requires=["requests", "requests_cache", "pytest", "scraperwiki"],
+    extras_require={"dev": ["black", "flake8", "isort"]},
 )
