@@ -3,8 +3,14 @@ from distutils.core import setup
 setup(
     name="dshelpers",
     version="2.0.0",
-    description="Provides some helper functions used by The Sensible Code Company's Data Services team.",
-    long_description="Provides some helper functions used by the The Sensible Code Company's Data Services team.",
+    description=(
+        "Provides some helper functions used by The Sensible Code Company's Data"
+        " Services team."
+    ),
+    long_description=(
+        "Provides some helper functions used by the The Sensible Code Company's Data"
+        " Services team."
+    ),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
