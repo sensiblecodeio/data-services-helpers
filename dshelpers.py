@@ -196,7 +196,7 @@ def _is_url_in_cache(*args, **kwargs):
     prepared_request = _prepare(*args, **kwargs_cleaned)
     request_hash = _get_hash(prepared_request)
     try:
-        return requests_cache.get_cache().has_key(request_hash)
+        return requests_cache.get_cache().contains(key=request_hash)
     except AttributeError as e:  # requests_cache not enabled
         if str(e) == "'Session' object has no attribute 'cache'":
             return False
